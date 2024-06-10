@@ -1,24 +1,30 @@
 import express from "express"
 import endpoints from "express-list-endpoints"
 import mongoose from "mongoose"
-import { config } from "dotenv"
 import { authorRoute } from "./services/authors/index.js"
 import { blogRoute } from "./services/blogs/index.js"
-import { badRequestHandler, genericErrorHandler, notfoundHandler, unauthorizedHandler } from "./errorHandlers.js"
-config()
+import {
+  badRequestHandler,
+  genericErrorHandler,
+  notfoundHandler,
+  unauthorizedHandler,
+} from "./errorHandlers.js"
+import { loginRoute } from "./services/login/index.js"
+import passport from "passport"
+import googleStrategy from "./lib/oauth/index.js"
 const app = express()
 const PORT = process.env.PORT || 3001
 
 app.use(express.json())
-
+passport.use("google", googleStrategy)
 app.use("/authors", authorRoute)
 app.use("/blogs", blogRoute)
+app.use("/login", loginRoute)
 
 app.use(badRequestHandler) // 400
 app.use(unauthorizedHandler) // 401
 app.use(notfoundHandler) // 404
-app.use(genericErrorHandler) // 500 (this should ALWAYS be the last one)
-
+app.use(genericErrorHandler) // 500
 
 const initServer = async () => {
   try {

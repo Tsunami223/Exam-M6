@@ -1,1 +1,1 @@
-# Exam-M6
+Epicode Blog Template

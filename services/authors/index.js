@@ -1,11 +1,9 @@
 import { Router } from "express"
 import Author from "./model.js"
 import Blog from "../blogs/model.js"
-import  cloudinaryUploader  from "../../config/index.js"
-import { JWTAuthMiddleware } from "../../lib/auth/index.js"
 export const authorRoute = Router()
 
-authorRoute.get("/", JWTAuthMiddleware, async (req, res, next) => {
+authorRoute.get("/", async (req, res, next) => {
   try {
     let authors = await Author.find()
     res.send(authors)
@@ -14,7 +12,7 @@ authorRoute.get("/", JWTAuthMiddleware, async (req, res, next) => {
   }
 })
 
-authorRoute.get("/:id", JWTAuthMiddleware, async (req, res, next) => {
+authorRoute.get("/:id", async (req, res, next) => {
   try {
     let author = await Author.findById(req.params.id)
     res.send(author)
@@ -23,41 +21,23 @@ authorRoute.get("/:id", JWTAuthMiddleware, async (req, res, next) => {
   }
 })
 
-authorRoute.get("/:id/blogs", JWTAuthMiddleware, async (req, res, next) => {
+authorRoute.get("/:id/blogs", async (req, res, next) => {
   try {
     let author = await Blog.find({
-      author: req.params.id,
-    }).populate({ path: "author", select: ["name", "lastName", "avatar"] })
+      author: req.params.id
+    }).populate({path: "author", select:["name", "lastName", "avatar"]})
     res.send(author)
   } catch (error) {
     next(error)
   }
 })
 
-authorRoute.post("/", async (req, res, next) => {
-  try {
-    let author = await Author.create(req.body)
-    res.send(author)
-  } catch (error) {
-    next(error)
-  }
-})
-authorRoute.put("/:id", JWTAuthMiddleware, async (req, res, next) => {
+authorRoute.put("/:id", async (req, res, next) => {
   try {
     let author = await Author.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
     })
     res.send(author)
-  } catch (error) {
-    next(error)
-  }
-})
-
-authorRoute.patch("/:id/avatar", cloudinaryUploader, async (req, res, next) => {
-  try {
-    console.log(req.file)
-    let updated = await Author.findByIdAndUpdate(req.params.id, {avatar: req.file.path}, {new: true})
-    res.send(updated)
   } catch (error) {
     next(error)
   }
@@ -74,3 +54,11 @@ authorRoute.delete("/:id", async (req, res, next) => {
   }
 })
 
+authorRoute.post("/", async (req, res, next) => {
+  try {
+    let author = await Author.create(req.body)
+    res.send(author)
+  } catch (error) {
+    next(error)
+  }
+})

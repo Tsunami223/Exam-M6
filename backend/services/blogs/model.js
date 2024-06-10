@@ -1,5 +1,4 @@
 import { Schema, model } from "mongoose"
-import Comment from "../comments/model.js"
 const blogsSchema = new Schema(
   {
     category: {
@@ -9,6 +8,10 @@ const blogsSchema = new Schema(
     title: {
       type: String,
       required: true,
+    },
+    content: {
+      type: String,
+      required: true
     },
     cover: {
       type: String,

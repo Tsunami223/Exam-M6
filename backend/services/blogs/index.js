@@ -2,9 +2,11 @@ import { Router } from "express"
 import Blog from "./model.js"
 import Comment from "../comments/model.js"
 import q2m from "query-to-mongo"
+import cloudinaryUploader from "../../config/index.js"
+import { JWTAuthMiddleware } from "../../lib/auth/index.js"
 export const blogRoute = Router()
 
-blogRoute.get("/", async (req, res, next) => {
+blogRoute.get("/", JWTAuthMiddleware,async (req, res, next) => {
   try {
     //http://localhost:3001/blogs?title=/tech/i
 
@@ -24,7 +26,7 @@ blogRoute.get("/", async (req, res, next) => {
   }
 })
 
-blogRoute.get("/:id", async (req, res, next) => {
+blogRoute.get("/:id", JWTAuthMiddleware, async (req, res, next) => {
   try {
     let blog = await Blog.findById(req.params.id)
     res.send(blog)
@@ -33,7 +35,7 @@ blogRoute.get("/:id", async (req, res, next) => {
   }
 })
 
-blogRoute.get("/:id/comments", async (req, res, next) => {
+blogRoute.get("/:id/comments", JWTAuthMiddleware, async (req, res, next) => {
   try {
     let comments = await Comment.find({
       blog: req.params.id,
@@ -48,11 +50,11 @@ blogRoute.get("/:id/comments", async (req, res, next) => {
   }
 })
 
-blogRoute.get("/:id/comments/:commentId", async (req, res, next) => {
+blogRoute.get("/:id/comments/:commentId", JWTAuthMiddleware, async (req, res, next) => {
   try {
     let comments = await Comment.find({
       blog: req.params.id,
-      _id: req.params.commentId
+      _id: req.params.commentId,
     }).populate({
       path: "author",
       model: "Author",
@@ -64,7 +66,7 @@ blogRoute.get("/:id/comments/:commentId", async (req, res, next) => {
   }
 })
 
-blogRoute.put("/:id", async (req, res, next) => {
+blogRoute.put("/:id", JWTAuthMiddleware, async (req, res, next) => {
   try {
     let blog = await Blog.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -75,12 +77,16 @@ blogRoute.put("/:id", async (req, res, next) => {
   }
 })
 
-blogRoute.put("/:id/comments/:commentId", async (req, res, next) => {
+blogRoute.put("/:id/comments/:commentId", JWTAuthMiddleware, async (req, res, next) => {
   try {
-    let comment = await Comment.findOneAndUpdate({
-      blog: req.params.id,
-      _id: req.params.commentId
-    }, req.body, {new: true}).populate({
+    let comment = await Comment.findOneAndUpdate(
+      {
+        blog: req.params.id,
+        _id: req.params.commentId,
+      },
+      req.body,
+      { new: true }
+    ).populate({
       path: "author",
       model: "Author",
       select: ["name", "lastName", "avatar"],
@@ -90,9 +96,19 @@ blogRoute.put("/:id/comments/:commentId", async (req, res, next) => {
     next(error)
   }
 })
-
-
-blogRoute.delete("/:id", async (req, res, next) => {
+blogRoute.patch("/:id/cover", JWTAuthMiddleware, cloudinaryUploader, async (req, res, next) => {
+  try {
+    let updated = await Blog.findByIdAndUpdate(
+      req.params.id,
+      { cover: req.file.path },
+      { new: true }
+    )
+    res.send(updated)
+  } catch (error) {
+    next(error)
+  }
+})
+blogRoute.delete("/:id", JWTAuthMiddleware, async (req, res, next) => {
   try {
     await Blog.deleteOne({
       _id: req.params.id,
@@ -103,11 +119,11 @@ blogRoute.delete("/:id", async (req, res, next) => {
   }
 })
 
-blogRoute.delete("/:id/comments/:commentId", async (req, res, next) => {
+blogRoute.delete("/:id/comments/:commentId", JWTAuthMiddleware, async (req, res, next) => {
   try {
     await Comment.findOneAndDelete({
       blog: req.params.id,
-      _id: req.params.commentId
+      _id: req.params.commentId,
     })
     res.send(204)
   } catch (error) {
@@ -115,11 +131,7 @@ blogRoute.delete("/:id/comments/:commentId", async (req, res, next) => {
   }
 })
 
-
-
-
-
-blogRoute.post("/", async (req, res, next) => {
+blogRoute.post("/", JWTAuthMiddleware, async (req, res, next) => {
   try {
     let blog = await Blog.create(req.body)
     res.send(blog)
@@ -128,7 +140,7 @@ blogRoute.post("/", async (req, res, next) => {
   }
 })
 
-blogRoute.post("/:id", async (req, res, next) => {
+blogRoute.post("/:id", JWTAuthMiddleware, async (req, res, next) => {
   try {
     let newComment = await Comment.create({ ...req.body, blog: req.params.id })
     console.log(newComment)
